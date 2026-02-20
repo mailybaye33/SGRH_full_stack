@@ -146,11 +146,12 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
     'x-csrf-token',  # Ajoute cette ligne
 ]
-
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 # CSRF trusted origins
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
-    'http://127.0.0.1:3000',
+    'http://localhost:8000',
 ]
 
 # Désactiver CSRF pour l'API (en développement)

@@ -1,322 +1,227 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Container,
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  Box,
-  Alert,
-} from '@mui/material';
-import axios from 'axios';
 
-export default function LoginPage() {
+export default function SimpleLoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [csrfToken, setCsrfToken] = useState('');
+  const [csrfLoading, setCsrfLoading] = useState(true);
   const router = useRouter();
 
-  // Récupérer le token CSRF au chargement de la page
+  // Récupérer le token CSRF au chargement
   useEffect(() => {
-    fetchCSRFToken();
+    fetchCsrfToken();
   }, []);
 
-  const fetchCSRFToken = async () => {
+  const fetchCsrfToken = async () => {
     try {
-      await axios.get('http://localhost:8000/users/api/csrf-token/', {
-        withCredentials: true
+      const response = await fetch('http://localhost:8000/users/api/csrf-token/', {
+        credentials: 'include', // Important pour les cookies
       });
-    } catch (err) {
-      console.error('Erreur lors de la récupération du token CSRF:', err);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      // IMPORTANT: Utiliser l'URL correcte avec /users/
-      const response = await axios.post(
-        'http://localhost:8000/users/api/login/', // Notez le /users/ dans l'URL
-        { username, password },
-        {
-          withCredentials: true, // Important pour les cookies de session
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken'), // Utiliser la fonction getCookie
-          },
-        }
-      );
-
-      console.log('Réponse API:', response.data); // Pour déboguer
-      
-      // Vérifier le format de réponse
-      if (response.data.success) {
-        // Stocker l'utilisateur
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        
-        // Stocker le session ID si disponible
-        if (response.data.sessionid) {
-          localStorage.setItem('sessionid', response.data.sessionid);
-        }
-        
-        // Rediriger vers le dashboard
-        router.push('/dashboard');
-      } else {
-        setError(response.data.message || 'Erreur de connexion');
-      }
-      
-    } catch (err: any) {
-      console.error('Erreur détaillée:', err);
-      
-      // Meilleure gestion des erreurs
-      if (err.response) {
-        const { status, data } = err.response;
-        
-        if (status === 400) {
-          // Erreurs de validation Django
-          if (data.errors && data.errors.non_field_errors) {
-            setError(data.errors.non_field_errors[0]);
-          } else if (data.non_field_errors) {
-            setError(data.non_field_errors[0]);
-          } else if (data.detail) {
-            setError(data.detail);
-          } else if (typeof data === 'object') {
-            // Afficher la première erreur
-            const errors = data.errors || data;
-            const firstError = Object.values(errors)[0];
-            setError(Array.isArray(firstError) ? firstError[0] : firstError);
-          } else {
-            setError('Identifiants incorrects');
-          }
-        } else if (status === 401) {
-          setError('Non autorisé');
-        } else if (status === 403) {
-          setError('Accès interdit');
-        } else if (status === 404) {
-          setError('Endpoint API non trouvé. Vérifiez l\'URL.');
-        } else if (status === 500) {
-          setError('Erreur interne du serveur');
-        } else {
-          setError(`Erreur serveur (${status})`);
-        }
-      } else if (err.request) {
-        setError('Le serveur ne répond pas. Vérifiez que:');
-        setError(prev => prev + '\n1. Django est lancé sur http://localhost:8000');
-        setError(prev => prev + '\n2. L\'URL de l\'API est correcte');
-        setError(prev => prev + '\n3. Il n\'y a pas de problème CORS');
-      } else {
-        setError('Erreur: ' + err.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fonction utilitaire pour récupérer le cookie CSRF
-  function getCookie(name: string): string | null {
-    if (typeof document === 'undefined') return null;
-    
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) {
-      const cookieValue = parts.pop()?.split(';').shift();
-      return cookieValue || null;
-    }
-    return null;
-  }
-
-  // Version simplifiée pour tester (sans CSRF)
-  const handleSubmitSimple = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const response = await axios.post(
-        'http://localhost:8000/users/api/login/',
-        { username, password },
-        {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      console.log('Réponse:', response.data);
-      
-      if (response.data.success) {
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        router.push('/dashboard');
-      } else {
-        setError(response.data.message || 'Erreur de connexion');
-      }
-      
-    } catch (err: any) {
-      console.error('Erreur:', err);
-      
-      if (err.response) {
-        // Afficher l'erreur directement depuis Django
-        if (err.response.data && typeof err.response.data === 'object') {
-          const errorData = err.response.data;
-          
-          // Différents formats d'erreur possibles
-          if (errorData.errors) {
-            // Format avec clé 'errors'
-            const errorMsg = Object.values(errorData.errors)[0];
-            setError(Array.isArray(errorMsg) ? errorMsg[0] : errorMsg);
-          } else if (errorData.non_field_errors) {
-            // Format standard DRF
-            setError(errorData.non_field_errors[0]);
-          } else if (errorData.detail) {
-            // Format avec clé 'detail'
-            setError(errorData.detail);
-          } else {
-            // Autre format
-            const firstError = Object.values(errorData)[0];
-            setError(Array.isArray(firstError) ? firstError[0] : firstError);
-          }
-        } else if (typeof err.response.data === 'string') {
-          setError(err.response.data);
-        } else {
-          setError(`Erreur ${err.response.status}: ${err.response.statusText}`);
-        }
-      } else if (err.request) {
-        setError('Impossible de joindre le serveur Django. Vérifiez que:');
-        setError(prev => prev + '\n1. Le serveur Django est lancé (python manage.py runserver)');
-        setError(prev => prev + '\n2. L\'URL est correcte: http://localhost:8000');
-      } else {
-        setError('Erreur: ' + err.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fonction pour tester l'API directement
-  const testAPI = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/users/api/login/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: 'admin',
-          password: 'admin123'
-        }),
-        credentials: 'include'
-      });
-      
-      const data = await response.json();
-      console.log('Test API - Status:', response.status);
-      console.log('Test API - Data:', data);
       
       if (response.ok) {
-        alert('API fonctionne! Réponse: ' + JSON.stringify(data, null, 2));
+        const data = await response.json();
+        setCsrfToken(data.csrfToken || '');
+        console.log('CSRF token reçu');
       } else {
-        alert('Erreur API: ' + JSON.stringify(data, null, 2));
+        console.error('Erreur CSRF:', response.status);
       }
     } catch (err) {
-      console.error('Test API error:', err);
-      alert('Erreur de connexion à l\'API');
+      console.error('Erreur lors de la récupération du CSRF:', err);
+    } finally {
+      setCsrfLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      // Préparer les headers avec CSRF
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Ajouter le token CSRF s'il est disponible
+      if (csrfToken) {
+        headers['X-CSRFToken'] = csrfToken;
+      }
+
+      const response = await fetch('http://localhost:8000/users/api/login/', {
+        method: 'POST',
+        headers,
+        credentials: 'include', // Important pour les cookies de session
+        body: JSON.stringify({
+          username: username.trim(),
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Connexion réussie
+        localStorage.setItem('user', JSON.stringify(data.user || data));
+        router.push('/dashboard');
+      } else {
+        // Erreur
+        setError(data.message || 'Identifiants incorrects');
+      }
+    } catch (err) {
+      setError('Erreur de connexion au serveur');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fillTestCredentials = () => {
+    setUsername('admin');
+    setPassword('admin123');
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
-          <Typography component="h1" variant="h4" align="center" gutterBottom>
-            SGRH - Connexion
-          </Typography>
-          
-          <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
-            API: http://localhost:8000/users/api/login/
-          </Typography>
-          
-          {error && (
-            <Alert 
-              severity="error" 
-              sx={{ 
-                mb: 2,
-                whiteSpace: 'pre-line'
-              }}
-            >
-              {error}
-            </Alert>
-          )}
-
-          <form onSubmit={handleSubmitSimple}> {/* Utiliser la version simple */}
-            <TextField
-              fullWidth
-              label="Nom d'utilisateur"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              margin="normal"
-              required
-              disabled={loading}
-              autoComplete="username"
-              autoFocus
-            />
-            
-            <TextField
-              fullWidth
-              label="Mot de passe"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              margin="normal"
-              required
-              disabled={loading}
-              autoComplete="current-password"
-            />
-            
-            <Button
-              fullWidth
-              type="submit"
-              variant="contained"
-              size="large"
-              sx={{ mt: 3, mb: 2 }}
-              disabled={loading}
-            >
-              {loading ? 'Connexion...' : 'Se connecter'}
-            </Button>
-          </form>
-          
-          <Box sx={{ mt: 3, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              Test avec admin/admin123
-            </Typography>
-            
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={testAPI}
-              sx={{ mt: 1 }}
-            >
-              Tester l'API
-            </Button>
-          </Box>
-          
-          <Box sx={{ mt: 4, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              <strong>Pour déboguer:</strong>
-              <br />1. Vérifiez que Django tourne sur http://localhost:8000
-              <br />2. Ouvrez DevTools (F12) → Network
-              <br />3. Vérifiez la requête POST vers /users/api/login/
-              <br />4. Vérifiez la réponse dans l'onglet "Response"
-            </Typography>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+    <div style={styles.container}>
+      <h1 style={styles.title}>Connexion SGRH</h1>
+      
+      {/* État CSRF */}
+      <div style={{
+        ...styles.csrfStatus,
+        backgroundColor: csrfToken ? '#e8f5e9' : '#fff3e0',
+      }}>
+        {csrfLoading ? 'Chargement CSRF...' : 
+         csrfToken ? '✅ CSRF prêt' : '⚠️ CSRF non disponible'}
+      </div>
+      
+      {error && (
+        <div style={styles.error}>
+          {error}
+        </div>
+      )}
+      
+      <form onSubmit={handleSubmit} style={styles.form}>
+        <input
+          type="text"
+          placeholder="Nom d'utilisateur"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          style={styles.input}
+          required
+          disabled={loading || csrfLoading}
+        />
+        
+        <input
+          type="password"
+          placeholder="Mot de passe"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={styles.input}
+          required
+          disabled={loading || csrfLoading}
+        />
+        
+        <button
+          type="submit"
+          style={{
+            ...styles.button,
+            opacity: (loading || csrfLoading) ? 0.7 : 1,
+            cursor: (loading || csrfLoading) ? 'not-allowed' : 'pointer',
+          }}
+          disabled={loading || csrfLoading}
+        >
+          {loading ? 'Connexion...' : 'Se connecter'}
+        </button>
+      </form>
+      
+      <div style={styles.testInfo}>
+        <p>Pour tester : admin / admin123</p>
+        <button
+          onClick={fillTestCredentials}
+          style={styles.smallButton}
+          disabled={loading || csrfLoading}
+        >
+          Remplir avec admin
+        </button>
+        
+        <button
+          onClick={fetchCsrfToken}
+          style={{...styles.smallButton, marginLeft: '10px'}}
+          disabled={loading}
+        >
+          Rafraîchir CSRF
+        </button>
+      </div>
+    </div>
   );
 }
+
+const styles = {
+  container: {
+    maxWidth: '400px',
+    margin: '100px auto',
+    padding: '40px',
+    backgroundColor: '#fff',
+    borderRadius: '10px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+  },
+  title: {
+    textAlign: 'center' as const,
+    color: '#333',
+    marginBottom: '20px',
+  },
+  csrfStatus: {
+    padding: '10px',
+    borderRadius: '6px',
+    marginBottom: '20px',
+    textAlign: 'center' as const,
+    fontSize: '14px',
+  },
+  error: {
+    backgroundColor: '#ffeaea',
+    color: '#d32f2f',
+    padding: '12px',
+    borderRadius: '6px',
+    marginBottom: '20px',
+    textAlign: 'center' as const,
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '20px',
+  },
+  input: {
+    padding: '14px',
+    border: '1px solid #ddd',
+    borderRadius: '6px',
+    fontSize: '16px',
+    outline: 'none',
+  },
+  button: {
+    padding: '14px',
+    backgroundColor: '#4CAF50',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    fontSize: '16px',
+    fontWeight: 'bold' as const,
+  },
+  testInfo: {
+    marginTop: '30px',
+    textAlign: 'center' as const,
+    color: '#666',
+  },
+  smallButton: {
+    marginTop: '10px',
+    padding: '8px 16px',
+    backgroundColor: '#f0f0f0',
+    border: '1px solid #ddd',
+    borderRadius: '4px',
+    cursor: 'pointer',
+  },
+};

@@ -1,3 +1,4 @@
+# users/serializers.py
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import User
@@ -5,7 +6,8 @@ from .models import User
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'num_phone', 'role', 'is_active', 'date_joined']
+        # Supprimez 'email', 'first_name', 'last_name' car ils n'existent pas dans votre modèle
+        fields = ['id', 'username', 'num_phone', 'role', 'is_active', 'date_joined', 'is_staff']
         read_only_fields = ['date_joined']
 
 class LoginSerializer(serializers.Serializer):

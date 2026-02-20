@@ -1,3 +1,4 @@
+# users/models.py
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils.translation import gettext_lazy as _
@@ -8,6 +9,8 @@ class UserManager(BaseUserManager):
             raise ValueError('Le nom d\'utilisateur est obligatoire')
         if not num_phone:
             raise ValueError('Le numéro de téléphone est obligatoire')
+        
+       
         
         user = self.model(
             username=username,
@@ -37,7 +40,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='EMPLOYEE')
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    is_superuser = models.BooleanField(default=False)  # AJOUTE CETTE LIGNE
+    is_superuser = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
     
     objects = UserManager()
@@ -48,7 +51,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.username} ({self.num_phone})"
     
-    # Tu peux garder tes méthodes personnalisées ou laisser Django gérer
     def has_perm(self, perm, obj=None):
         return self.is_superuser or self.role == 'ADMIN'
     
