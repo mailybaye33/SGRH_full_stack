@@ -1,19 +1,15 @@
+# users/urls.py
 from django.urls import path
 from . import views
 
 app_name = 'users'
 
 urlpatterns = [
-    # Authentication endpoints
-    # path('api/login/', views.LoginAPIView.as_view(), name='api_login'),
-    path('api/login/', views.SimpleLoginAPIView.as_view(), name='api_login'),
-    path('api/logout/', views.LogoutAPIView.as_view(), name='api_logout'),
-    path('api/current-user/', views.CurrentUserAPIView.as_view(), name='current_user'),
-    path('api/check-auth/', views.CheckAuthAPIView.as_view(), name='check_auth'),
-    path('api/csrf-token/', views.CSRFTokenAPIView.as_view(), name='csrf_token'),
-    
-    path('api/test-logout/', views.TestLogoutView.as_view(), name='test_logout'),
-    # User management endpoints
-    path('api/users/', views.UserListCreateAPIView.as_view(), name='user_list_create'),
-    path('api/users/<int:pk>/', views.UserDetailAPIView.as_view(), name='user_detail'),
+    path('', views.UserListCreateView.as_view(), name='user-list'),
+    path('<int:pk>/', views.UserDetailView.as_view(), name='user-detail'),
+    path('profile/me/', views.CurrentUserView.as_view(), name='current-user'),
+    path('register/', views.RegisterView.as_view(), name='register'),
+    path('login/', views.LoginView.as_view(), name='login'),
+    path('logout/', views.LogoutView.as_view(), name='logout'),
+    path('change-password/', views.ChangePasswordView.as_view(), name='change-password'),
 ]

@@ -1,27 +1,22 @@
+# users/admin.py
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.admin import UserAdmin
 from .models import User
 
 @admin.register(User)
-class UserAdmin(BaseUserAdmin):
-    list_display = ('username', 'num_phone', 'role', 'is_active', 'date_joined')
-    list_filter = ('role', 'is_active', 'is_staff')
+class CustomUserAdmin(UserAdmin):
+    list_display = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'is_active']
+    list_filter = ['role', 'is_active', 'is_staff']
+    search_fields = ['username', 'email', 'first_name', 'last_name']
     
-    fieldsets = (
-        (None, {'fields': ('username', 'password')}),
-        (_('Informations personnelles'), {'fields': ('num_phone',)}),
-        (_('Permissions'), {'fields': ('role', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
-        (_('Dates importantes'), {'fields': ('last_login', 'date_joined')}),
-    )
-    
-    add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('username', 'num_phone', 'password1', 'password2', 'role', 'is_staff', 'is_superuser'),
+    fieldsets = UserAdmin.fieldsets + (
+        ('Informations supplémentaires', {
+            'fields': ('role', 'phone', 'department', 'profile_picture'),
         }),
     )
     
-    search_fields = ('username', 'num_phone')
-    ordering = ('-date_joined',)
-    filter_horizontal = ('groups', 'user_permissions',)
+    add_fieldsets = UserAdmin.add_fieldsets + (
+        ('Informations supplémentaires', {
+            'fields': ('role', 'phone', 'department'),
+        }),
+    )
