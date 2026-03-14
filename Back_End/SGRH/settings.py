@@ -14,7 +14,7 @@ SECRET_KEY = 'django-insecure-your-secret-key-here-change-it'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']  # En développement seulement
 
 # Application definition
 INSTALLED_APPS = [
@@ -29,21 +29,22 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'corsheaders',
+    'rest_framework.authtoken',
     
-    # Vos applications - DANS CET ORDRE
-    'users',         # 1. D'abord users (modèle User)
-    'departments',   # 2. departments
-    'employees',     # 3. employees
-    'attendance',    # 4. attendance
-    'leaves',        # 5. leaves
-    'promotions',    # 6. promotions
-    'salaries',      # 7. salaries
+    # Vos applications
+    'users',
+    'departments',
+    'employees',
+    'attendance',
+    'leaves',
+    'promotions',
+    'salaries',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -52,6 +53,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'SGRH.urls'
+AUTH_USER_MODEL = "users.User"
 
 TEMPLATES = [
     {
@@ -112,7 +114,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# 🔴 LIGNE IMPORTANTE À AJOUTER - Modèle User personnalisé
+# Modèle User personnalisé
 AUTH_USER_MODEL = 'users.User'
 
 # REST Framework settings
@@ -121,8 +123,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
@@ -130,7 +131,7 @@ REST_FRAMEWORK = {
         'rest_framework.filters.OrderingFilter',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20
+    'PAGE_SIZE': 50
 }
 
 # CORS settings
@@ -138,3 +139,6 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True  # Pour le développement seulement
+CORS_ALLOW_CREDENTIALS = True

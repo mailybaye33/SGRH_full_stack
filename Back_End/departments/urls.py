@@ -1,12 +1,21 @@
-# departments/urls.py
 from django.urls import path
-from . import views
-
-app_name = 'departments'
+from .views import *
 
 urlpatterns = [
-    path('', views.DepartmentListCreateView.as_view(), name='department-list'),
-    path('<int:pk>/', views.DepartmentDetailView.as_view(), name='department-detail'),
-    path('hierarchy/', views.DepartmentHierarchyView.as_view(), name='department-hierarchy'),
-    path('statistics/', views.DepartmentStatisticsView.as_view(), name='department-statistics'),
+
+    path(
+        '',
+        DepartmentListCreateView.as_view()
+    ),
+
+    path(
+        '<int:pk>/',
+        DepartmentDetailView.as_view()
+    ),
+
+    path(
+        '<int:department_id>/employees/',
+        DepartmentEmployeesView.as_view()
+    ),
+
 ]

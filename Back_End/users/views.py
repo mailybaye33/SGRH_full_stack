@@ -1,123 +1,121 @@
-# users/views.py
-from rest_framework import generics, permissions, status
-from rest_framework.response import Response
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
-from django.contrib.auth import get_user_model, authenticate, login, logout
-from .serializers import (
-    UserSerializer, UserCreateSerializer, UserUpdateSerializer, UserProfileSerializer
-)
+from rest_framework.response import Response
+from django.contrib.auth import authenticate
 
-User = get_user_model()
+from .models import User
+from .serializers import UserSerializer, RegisterSerializer
+from .permissions import IsAdmin
 
-class IsAdminUser(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return request.user and (
-            request.user.is_superuser or 
-            getattr(request.user, 'role', '') == 'ADMIN'
-        )
+from employees.models import Employee
 
-class UserListCreateView(generics.ListCreateAPIView):
-    """Liste et création des utilisateurs"""
-    queryset = User.objects.all().order_by('-date_joined')
+
+# ===============================
+# LISTE UTILISATEURS
+# ===============================
+
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from .models import User
+from .serializers import UserSerializer
+from .permissions import IsAdmin
+
+
+class UserListView(generics.ListCreateAPIView):
+
+    queryset = User.objects.all()
+
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
-    
-    def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return UserCreateSerializer
-        return UserSerializer
+
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+
+# ===============================
+# DETAIL UTILISATEUR
+# ===============================
 
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """Détail, modification et suppression d'un utilisateur"""
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get_serializer_class(self):
-        if self.request.method in ['PUT', 'PATCH']:
-            return UserUpdateSerializer
-        return UserSerializer
-    
-    def get_permissions(self):
-        if self.request.method in ['DELETE']:
-            return [permissions.IsAuthenticated(), IsAdminUser()]
-        return [permissions.IsAuthenticated()]
 
-class CurrentUserView(APIView):
-    """Utilisateur actuellement connecté"""
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get(self, request):
-        serializer = UserProfileSerializer(request.user)
-        return Response(serializer.data)
-    
-    def put(self, request):
-        serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    queryset = User.objects.all()
+
+    serializer_class = UserSerializer
+
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    # IMPORTANT
+    # supprimer la liaison avec employee avant suppression
+
+    def perform_destroy(self, instance):
+
+        try:
+
+            employee = instance.employee
+
+            employee.user = None
+            employee.save()
+
+        except Employee.DoesNotExist:
+            pass
+
+        instance.delete()
+
+
+# ===============================
+# INSCRIPTION
+# ===============================
 
 class RegisterView(generics.CreateAPIView):
-    """Inscription d'un nouvel utilisateur"""
+
     queryset = User.objects.all()
-    serializer_class = UserCreateSerializer
-    permission_classes = [permissions.AllowAny]
 
-class LoginView(APIView):
-    """Connexion utilisateur"""
-    permission_classes = [permissions.AllowAny]
-    
-    def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        
-        user = authenticate(username=username, password=password)
-        
-        if user:
-            login(request, user)
-            serializer = UserProfileSerializer(user)
-            return Response({
-                'success': True,
-                'user': serializer.data,
-                'message': 'Connexion réussie'
-            })
-        
-        return Response({
-            'success': False,
-            'message': 'Nom d\'utilisateur ou mot de passe incorrect'
-        }, status=status.HTTP_401_UNAUTHORIZED)
+    serializer_class = RegisterSerializer
 
-class LogoutView(APIView):
-    """Déconnexion utilisateur"""
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def post(self, request):
-        logout(request)
-        return Response({
-            'success': True,
-            'message': 'Déconnexion réussie'
-        })
 
-class ChangePasswordView(APIView):
-    """Changement de mot de passe"""
-    permission_classes = [permissions.IsAuthenticated]
-    
+# ===============================
+# LOGIN
+# ===============================
+
+class LoginAPIView(APIView):
+
+    permission_classes = [AllowAny]
+
     def post(self, request):
-        user = request.user
-        old_password = request.data.get('old_password')
-        new_password = request.data.get('new_password')
-        
-        if not user.check_password(old_password):
-            return Response({
-                'success': False,
-                'message': 'Ancien mot de passe incorrect'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        user.set_password(new_password)
-        user.save()
-        
+
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        try:
+
+            user = User.objects.get(email=email)
+
+        except User.DoesNotExist:
+
+            return Response(
+                {"error": "Utilisateur non trouvé"},
+                status=400
+            )
+
+        user = authenticate(
+            username=user.username,
+            password=password
+        )
+
+        if user is None:
+
+            return Response(
+                {"error": "Mot de passe incorrect"},
+                status=400
+            )
+
+        token, created = Token.objects.get_or_create(user=user)
+
         return Response({
-            'success': True,
-            'message': 'Mot de passe changé avec succès'
+
+            "token": token.key,
+            "id": user.id,      # IMPORTANT
+            "email": user.email,
+            "role": user.role
+
         })
