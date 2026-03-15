@@ -1,4 +1,5 @@
 ﻿// src/pages/admin/Presences.jsx
+
 import { useApp } from "../../context/AppContext";
 
 export default function Presences() {
@@ -15,11 +16,13 @@ export default function Presences() {
 
   const getEmployeeName = (id) => {
 
-    const emp = employesList.find(e => e.id === id);
+    const emp = employesList.find(
+      e => String(e.id) === String(id)
+    );
 
     return emp
       ? `${emp.first_name} ${emp.last_name}`
-      : id;
+      : "Employé inconnu";
 
   };
 
@@ -45,23 +48,33 @@ export default function Presences() {
 
         <tbody>
 
-          {presencesList.map(p => (
+          {presencesList.length === 0 ? (
 
-            <tr key={p.first_name}>
-
-              <td>{getEmployeeName(p.employee)}</td>
-
-              <td>{p.date}</td>
-
-              <td>{p.check_in}</td>
-
-              <td>{p.check_out}</td>
-
-              <td>{p.worked_hours}</td>
-
+            <tr>
+              <td colSpan="5">Aucune présence</td>
             </tr>
 
-          ))}
+          ) : (
+
+            presencesList.map(p => (
+
+              <tr key={p.id}>
+
+                <td>{getEmployeeName(p.employee)}</td>
+
+                <td>{p.date}</td>
+
+                <td>{p.check_in || "-"}</td>
+
+                <td>{p.check_out || "-"}</td>
+
+                <td>{p.worked_hours || 0}</td>
+
+              </tr>
+
+            ))
+
+          )}
 
         </tbody>
 

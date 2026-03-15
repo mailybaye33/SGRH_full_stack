@@ -13,4 +13,9 @@ urlpatterns = [
         SalaryDetailView.as_view()
     ),
 
+    path(
+        "generate/",
+        GenerateSalariesView.as_view()
+    ),
+
 ]

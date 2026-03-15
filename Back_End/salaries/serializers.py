@@ -19,7 +19,6 @@ class SalarySerializer(serializers.ModelSerializer):
             "employee_name",
             "month",
             "year",
-            "total_hours",
             "total_bonus",
             "total_deductions",
             "final_salary",

@@ -9,13 +9,18 @@ class SalaryAdmin(admin.ModelAdmin):
         "employee",
         "month",
         "year",
-        "total_hours",
         "total_bonus",
         "total_deductions",
-        "final_salary"
+        "final_salary",
+        "created_at"
     ]
 
     list_filter = [
         "month",
         "year"
+    ]
+
+    search_fields = [
+        "employee__first_name",
+        "employee__last_name"
     ]

@@ -258,35 +258,39 @@ export const AppProvider = ({ children }) => {
 
   const checkIn = async () => {
 
-    try {
+  try {
 
-      await api.post("/attendance/check-in/");
+    const res = await api.post("/attendance/check-in/");
 
-      await loadData();
+    setPresences(prev => [...prev, res.data]);
 
-    } catch (error) {
+  } catch (error) {
 
-      console.error("Erreur check-in:", error);
+    console.error("Erreur check-in:", error);
 
-    }
+  }
 
-  };
+};
 
-  const checkOut = async () => {
+const checkOut = async () => {
 
-    try {
+  try {
 
-      await api.post("/attendance/check-out/");
+    const res = await api.post("/attendance/check-out/");
 
-      await loadData();
+    setPresences(prev =>
+      prev.map(p =>
+        p.id === res.data.id ? res.data : p
+      )
+    );
 
-    } catch (error) {
+  } catch (error) {
 
-      console.error("Erreur check-out:", error);
+    console.error("Erreur check-out:", error);
 
-    }
+  }
 
-  };
+};
 
   // =============================
   // INIT

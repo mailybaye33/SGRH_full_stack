@@ -1,8 +1,8 @@
 from django.utils import timezone
 from rest_framework.response import Response
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics
 
 from .models import Attendance
 from .serializers import AttendanceSerializer
@@ -17,23 +17,20 @@ class AttendanceListCreateView(generics.ListCreateAPIView):
 
         user = self.request.user
 
-        # ADMIN voit toutes les présences
         if user.role == "ADMIN":
             return Attendance.objects.all()
 
-        # EMPLOYÉ voit seulement ses présences
         return Attendance.objects.filter(employee=user.employee)
 
-    # IMPORTANT
     def perform_create(self, serializer):
 
         user = self.request.user
 
-        # empêcher un employé de créer une présence pour quelqu'un d'autre
         if user.role == "ADMIN":
             serializer.save()
         else:
             serializer.save(employee=user.employee)
+
 
 class AttendanceDetailView(generics.RetrieveUpdateDestroyAPIView):
 
@@ -77,11 +74,9 @@ class CheckInView(APIView):
             check_in=timezone.now().time()
         )
 
-        return Response({
-            "id": attendance.id,
-            "date": attendance.date,
-            "check_in": attendance.check_in
-        })
+        serializer = AttendanceSerializer(attendance)
+
+        return Response(serializer.data)
 
 
 # CHECK OUT

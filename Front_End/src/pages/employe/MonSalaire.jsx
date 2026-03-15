@@ -41,30 +41,46 @@ export default function MonSalaire() {
       <table>
 
         <thead>
-          <tr>
-            <th>Mois</th>
-            <th>Année</th>
-            <th>Heures</th>
-            <th>Bonus</th>
-            <th>Salaire final</th>
-          </tr>
-        </thead>
+  <tr>
+    <th>Mois</th>
+    <th>Année</th>
+    <th>Bonus</th>
+    <th>Déductions</th>
+    <th>Salaire final</th>
+  </tr>
+</thead>
 
-        <tbody>
+<tbody>
 
-          {monSalaire.map(s => (
+  {monSalaire.length === 0 ? (
 
-            <tr key={s.id}>
-              <td>{s.month}</td>
-              <td>{s.year}</td>
-              <td>{s.total_hours}</td>
-              <td>{s.total_bonus}</td>
-              <td>{s.final_salary}</td>
-            </tr>
+    <tr>
+      <td colSpan="5">Aucun salaire disponible</td>
+    </tr>
 
-          ))}
+  ) : (
 
-        </tbody>
+    monSalaire.map(s => (
+
+      <tr key={s.id}>
+
+        <td>{s.month}</td>
+
+        <td>{s.year}</td>
+
+        <td>{s.total_bonus}</td>
+
+        <td>{s.total_deductions}</td>
+
+        <td><b>{s.final_salary} €</b></td>
+
+      </tr>
+
+    ))
+
+  )}
+
+</tbody>
 
       </table>
 

@@ -26,49 +26,55 @@ class Attendance(models.Model):
         blank=True
     )
 
+    overtime_hours = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0
+    )
+
+    missing_hours = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0
+    )
+
     def calculate_hours(self):
+
+        if not self.check_in or not self.check_out:
+            return
+
+        start = datetime.datetime.combine(self.date, self.check_in)
+        end = datetime.datetime.combine(self.date, self.check_out)
+
+        diff = end - start
+        hours = diff.total_seconds() / 3600
+
+        self.worked_hours = hours
 
         weekday = self.date.weekday()
 
-        # samedi et dimanche → pas de travail
-        if weekday in [5, 6]:
-            self.worked_hours = 0
-            return
-
-        start = datetime.time(8, 0)
-
-        # vendredi
-        if weekday == 4:
-            end = datetime.time(12, 0)
+        if weekday <= 3:
+            normal_hours = 8
+        elif weekday == 4:
+            normal_hours = 4
         else:
-            end = datetime.time(16, 0)
+            normal_hours = 0
 
-        if self.check_in and self.check_in < start:
-            self.check_in = start
+        if hours > normal_hours:
+            self.overtime_hours = hours - normal_hours
+            self.missing_hours = 0
 
-        if self.check_out and self.check_out > end:
-            self.check_out = end
+        elif hours < normal_hours:
+            self.missing_hours = normal_hours - hours
+            self.overtime_hours = 0
 
-        if self.check_in and self.check_out:
-
-            diff = (
-                datetime.datetime.combine(
-                    datetime.date.today(),
-                    self.check_out
-                )
-                -
-                datetime.datetime.combine(
-                    datetime.date.today(),
-                    self.check_in
-                )
-            )
-
-            self.worked_hours = diff.total_seconds() / 3600
+        else:
+            self.overtime_hours = 0
+            self.missing_hours = 0
 
 
     def save(self, *args, **kwargs):
 
-        # calcul seulement si sortie existe
         if self.check_in and self.check_out:
             self.calculate_hours()
 

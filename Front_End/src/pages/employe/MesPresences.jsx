@@ -4,7 +4,6 @@ export default function MesPresences() {
 
   const { presences, employes, currentUser, checkIn, checkOut } = useApp();
 
-  // sécuriser les données
   const presencesList = Array.isArray(presences)
     ? presences
     : presences?.results || [];
@@ -13,19 +12,24 @@ export default function MesPresences() {
     ? employes
     : employes?.results || [];
 
-  // trouver l'employé connecté
+  if (!currentUser) {
+    return <p>Chargement...</p>;
+  }
+
   const employe = employesList.find(
-    e => String(e.user_id) === String(currentUser?.id)
+    e => String(e.user_id) === String(currentUser.id)
   );
 
-  // filtrer seulement ses présences
+  if (!employe) {
+    return <p>Aucun employé trouvé</p>;
+  }
+
   const mesPresences = presencesList.filter(
-    p => p.employee === employe?.id
+    p => String(p.employee) === String(employe.id)
   );
 
   const today = new Date().toISOString().split("T")[0];
 
-  // présence d'aujourd'hui
   const todayPresence = mesPresences.find(
     p => p.date === today
   );
@@ -79,7 +83,7 @@ export default function MesPresences() {
           {mesPresences.length === 0 ? (
 
             <tr>
-              <td colSpan="4">Aucune présence enregistrée</td>
+              <td colSpan="4">Aucune présence</td>
             </tr>
 
           ) : (
@@ -89,9 +93,12 @@ export default function MesPresences() {
               <tr key={p.id}>
 
                 <td>{p.date}</td>
+
                 <td>{p.check_in || "-"}</td>
+
                 <td>{p.check_out || "-"}</td>
-                <td>{p.worked_hours || "0"}</td>
+
+                <td>{p.worked_hours || 0}</td>
 
               </tr>
 

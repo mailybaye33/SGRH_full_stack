@@ -1,5 +1,4 @@
-﻿// src/pages/admin/Salaires.jsx
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useApp } from "../../context/AppContext";
 
 export default function Salaires() {
@@ -16,7 +15,9 @@ export default function Salaires() {
   const [form, setForm] = useState({
     employee: "",
     month: "",
-    year: ""
+    year: "",
+    start_date: "",
+    end_date: ""
   });
 
   const salairesList = Array.isArray(salaires)
@@ -47,7 +48,9 @@ export default function Salaires() {
     setForm({
       employee: "",
       month: "",
-      year: ""
+      year: "",
+      start_date: "",
+      end_date: ""
     });
 
   };
@@ -68,7 +71,7 @@ export default function Salaires() {
 
       <div className="page-header">
 
-        <h2 className="page-title">Salaires</h2>
+        <h2 className="page-title">Gestion des Salaires</h2>
 
         <button
           className="btn btn-primary"
@@ -86,49 +89,56 @@ export default function Salaires() {
           <tr>
             <th>Employé</th>
             <th>Mois</th>
-            <th>Heures</th>
             <th>Bonus</th>
             <th>Déductions</th>
-            <th>Salaire final</th>
+            <th>Salaire Final</th>
             <th>Actions</th>
           </tr>
 
         </thead>
 
-        <tbody>
+<tbody>
 
-          {salairesList.map(s => (
+  {salairesList.length === 0 ? (
 
-            <tr key={s.id}>
+    <tr>
+      <td colSpan="6">Aucun salaire calculé</td>
+    </tr>
 
-              <td>{s.employee_name}</td>
+  ) : (
 
-              <td>{s.month}/{s.year}</td>
+    salairesList.map(s => (
 
-              <td>{s.total_hours}</td>
+      <tr key={s.first_name}>
 
-              <td>{s.total_bonus}</td>
+        <td>{s.employee_name}</td>
 
-              <td>{s.total_deductions}</td>
+        <td>{s.month}/{s.year}</td>
 
-              <td>{s.final_salary} €</td>
+        <td>{s.total_bonus}</td>
 
-              <td>
+        <td>{s.total_deductions}</td>
 
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={() => handleDelete(s.id)}
-                >
-                  Supprimer
-                </button>
+        <td><b>{s.final_salary} MRU</b></td>
 
-              </td>
+        <td>
 
-            </tr>
+          <button
+            className="btn btn-danger btn-sm"
+            onClick={() => handleDelete(s.id)}
+          >
+            Supprimer
+          </button>
 
-          ))}
+        </td>
 
-        </tbody>
+      </tr>
+
+    ))
+
+  )}
+
+</tbody>
 
       </table>
 
@@ -140,7 +150,7 @@ export default function Salaires() {
 
           <div className="modal">
 
-            <h3>Calculer Salaire</h3>
+            <h3>Calculer un salaire</h3>
 
             <form onSubmit={handleSubmit} className="form-grid">
 
@@ -173,7 +183,7 @@ export default function Salaires() {
               <input
                 type="number"
                 name="month"
-                placeholder="Mois"
+                placeholder="Mois (1-12)"
                 min="1"
                 max="12"
                 value={form.month}
@@ -194,6 +204,24 @@ export default function Salaires() {
                 required
               />
 
+              {/* PERIODE PARTIELLE */}
+
+              <input
+                type="date"
+                name="start_date"
+                value={form.start_date}
+                onChange={handleChange}
+                className="form-control"
+              />
+
+              <input
+                type="date"
+                name="end_date"
+                value={form.end_date}
+                onChange={handleChange}
+                className="form-control"
+              />
+
               <div className="modal-footer">
 
                 <button
@@ -206,7 +234,7 @@ export default function Salaires() {
 
                 <button className="btn btn-primary">
 
-                  Calculer
+                  Calculer Salaire
 
                 </button>
 
