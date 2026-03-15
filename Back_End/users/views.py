@@ -116,6 +116,17 @@ class LoginAPIView(APIView):
             "token": token.key,
             "id": user.id,      # IMPORTANT
             "email": user.email,
+            "username": user.username,  # IMPORTANT
             "role": user.role
 
         })
+
+class CurrentUserView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        serializer = UserSerializer(request.user)
+
+        return Response(serializer.data)

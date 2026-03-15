@@ -11,4 +11,6 @@ urlpatterns = [
 
     path("login/", LoginAPIView.as_view()),
 
+    path("me/", CurrentUserView.as_view()),
+
 ]

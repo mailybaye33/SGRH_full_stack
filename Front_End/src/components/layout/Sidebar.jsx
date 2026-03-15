@@ -1,4 +1,5 @@
-﻿import { useApp } from "../../context/AppContext";
+﻿// components/layout/Sidebar.jsx
+import { useApp } from "../../context/AppContext";
 import { Link, useLocation } from "react-router-dom";
 
 const menuAdmin = [
@@ -20,163 +21,291 @@ const menuEmploye = [
 ];
 
 export default function Sidebar() {
-
-  const { currentUser, logout } = useApp();
-
+  const { currentUser, employes, logout } = useApp();
   const location = useLocation();
-
   const isAdmin = currentUser?.role === "ADMIN";
-
   const menu = isAdmin ? menuAdmin : menuEmploye;
 
-  return (
+  // Trouver l'employé connecté dans la liste des employés
+  const employesList = Array.isArray(employes) ? employes : employes?.results || [];
+  const employe = employesList.find(e => String(e.user_id) === String(currentUser?.id));
 
+  // Récupérer le prénom et nom
+  const firstName = employe?.first_name || currentUser?.username?.split(' ')[0] || "Utilisateur";
+  const lastName = employe?.last_name || "";
+  const fullName = lastName ? `${firstName} ${lastName}` : firstName;
+  const email = employe?.email || currentUser?.email || "";
+
+  // Initiales pour l'avatar
+  const getInitials = () => {
+    if (employe?.first_name && employe?.last_name) {
+      return `${employe.first_name.charAt(0)}${employe.last_name.charAt(0)}`.toUpperCase();
+    }
+    return currentUser?.username?.charAt(0).toUpperCase() || "U";
+  };
+
+  return (
     <aside
       style={{
-        width: 240,
-        background: "#0f172a",
-        color: "white",
+        width: 280,
+        background: "white",
+        color: "#1e293b",
         display: "flex",
         flexDirection: "column",
         minHeight: "100vh",
         position: "sticky",
         top: 0,
+        borderRight: "1px solid #f1f5f9",
+        boxShadow: "2px 0 12px rgba(0, 0, 0, 0.02)",
       }}
     >
-
       {/* Logo */}
-
       <div
         style={{
-          padding: "24px 20px 16px",
-          borderBottom: "1px solid #1e293b",
+          padding: "28px 24px 20px",
+          borderBottom: "1px solid #f1f5f9",
+          marginBottom: "16px",
         }}
       >
-
         <div
           style={{
-            fontSize: 20,
-            fontWeight: 800,
-            color: "#60a5fa",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            marginBottom: "8px",
           }}
         >
-          🏢 Gestion RH
+          <div
+            style={{
+              width: "44px",
+              height: "44px",
+              borderRadius: "14px",
+              background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "24px",
+              color: "white",
+              boxShadow: "0 8px 16px rgba(37,99,235,0.2)",
+            }}
+          >
+            🏢
+          </div>
+          <div
+            style={{
+              fontSize: "22px",
+              fontWeight: 700,
+              color: "#0f172a",
+              letterSpacing: "-0.5px",
+            }}
+          >
+            Gestion RH
+          </div>
         </div>
-
         <div
           style={{
-            fontSize: 11,
-            color: "#475569",
-            marginTop: 4,
+            fontSize: "12px",
+            color: "#64748b",
+            paddingLeft: "56px",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
           }}
         >
+          <span
+            style={{
+              width: "8px",
+              height: "8px",
+              borderRadius: "50%",
+              background: isAdmin ? "#2563eb" : "#059669",
+            }}
+          />
           {isAdmin ? "Administrateur" : "Espace Employé"}
         </div>
-
       </div>
 
       {/* Menu */}
-
       <nav
         style={{
           flex: 1,
-          padding: "12px 10px",
+          padding: "0 16px",
           display: "flex",
           flexDirection: "column",
-          gap: 2,
+          gap: "4px",
         }}
       >
-
         {menu.map((item) => {
-
           const active = location.pathname === item.path;
 
           return (
-
             <Link
               key={item.path}
               to={item.path}
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 10,
-                padding: "10px 12px",
-                borderRadius: 8,
+                gap: "14px",
+                padding: "12px 16px",
+                borderRadius: "12px",
                 textDecoration: "none",
-                background: active ? "#1e40af" : "transparent",
-                color: active ? "white" : "#94a3b8",
-                fontSize: 14,
+                background: active ? "#f0f9ff" : "transparent",
+                borderLeft: active ? "4px solid #2563eb" : "4px solid transparent",
+                color: active ? "#2563eb" : "#64748b",
+                fontSize: "14px",
                 fontWeight: active ? 600 : 400,
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  e.currentTarget.style.background = "#f8fafc";
+                  e.currentTarget.style.color = "#334155";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = "#64748b";
+                }
               }}
             >
-
-              <span>{item.icon}</span>
-
-              <span>{item.label}</span>
-
+              <span style={{ fontSize: "20px" }}>{item.icon}</span>
+              <span style={{ flex: 1 }}>{item.label}</span>
+              {active && (
+                <span
+                  style={{
+                    width: "6px",
+                    height: "6px",
+                    borderRadius: "50%",
+                    background: "#2563eb",
+                  }}
+                />
+              )}
             </Link>
-
           );
-
         })}
-
       </nav>
 
-      {/* Utilisateur */}
-
+      {/* User Section avec prénom et nom */}
       <div
         style={{
-          padding: "16px 10px",
-          borderTop: "1px solid #1e293b",
+          margin: "20px 16px",
+          padding: "16px",
+          borderRadius: "16px",
+          background: "#f8fafc",
+          border: "1px solid #f1f5f9",
         }}
       >
-
         <div
           style={{
-            fontSize: 12,
-            color: "#94a3b8",
-            padding: "0 12px 8px",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            marginBottom: "12px",
           }}
         >
-
-          <div>{currentUser?.email}</div>
-
-          <div
+          {/* <div
             style={{
-              marginTop: 4,
-              fontSize: 10,
-              color: isAdmin ? "#fbbf24" : "#94a3b8",
+              width: "48px",
+              height: "48px",
+              borderRadius: "14px",
+              background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+              color: "white",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "20px",
+              fontWeight: 600,
+              boxShadow: "0 4px 12px rgba(37,99,235,0.2)",
             }}
           >
-            {isAdmin ? "🔑 Administrateur" : "👤 Employé"}
-          </div>
-
+            {getInitials()}
+          </div> */}
+          {/* <div style={{ flex: 1 }}>
+            <div
+              style={{
+                fontSize: "15px",
+                fontWeight: 600,
+                color: "#0f172a",
+                marginBottom: "2px",
+              }}
+            >
+              {fullName}
+            </div>
+            <div
+              style={{
+                fontSize: "12px",
+                color: "#64748b",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              <span>{isAdmin ? "🔑" : "👤"}</span>
+              {isAdmin ? "Administrateur" : "Employé"}
+            </div>
+          </div> */}
         </div>
+
+        {/* Email de l'utilisateur
+        {email && (
+          <div style={{
+            fontSize: "11px",
+            color: "#64748b",
+            marginBottom: "12px",
+            padding: "4px 0",
+            borderTop: "1px dashed #e2e8f0",
+            borderBottom: "1px dashed #e2e8f0",
+            textAlign: "center"
+          }}>
+            {email}
+          </div>
+        )} */}
 
         <button
           onClick={logout}
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 10,
-            padding: "10px 12px",
-            borderRadius: 8,
+            justifyContent: "center",
+            gap: "8px",
+            padding: "12px",
+            borderRadius: "12px",
             border: "none",
             cursor: "pointer",
-            background: "transparent",
+            background: "white",
             color: "#ef4444",
             width: "100%",
+            fontSize: "14px",
+            fontWeight: 500,
+            transition: "all 0.2s ease",
+            border: "1px solid #fee2e2",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#fef2f2";
+            e.currentTarget.style.borderColor = "#fecaca";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "white";
+            e.currentTarget.style.borderColor = "#fee2e2";
           }}
         >
-
-          🚪 Déconnexion
-
+          <span>🚪</span>
+          Déconnexion
         </button>
-
       </div>
 
+      {/* Version Info */}
+      <div
+        style={{
+          padding: "16px 24px",
+          fontSize: "11px",
+          color: "#94a3b8",
+          borderTop: "1px solid #f1f5f9",
+          textAlign: "center",
+        }}
+      >
+        Version 2.0.0
+      </div>
     </aside>
-
   );
-
 }

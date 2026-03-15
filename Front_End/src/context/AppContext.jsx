@@ -62,7 +62,7 @@ export const AppProvider = ({ children }) => {
 
       setCurrentUser({
         id: data.id,
-        email: data.email,
+        email: data.email,username: data.username,
         role: data.role
       });
 
@@ -298,20 +298,39 @@ const checkOut = async () => {
 
   useEffect(() => {
 
+  const initAuth = async () => {
+
     const savedToken = localStorage.getItem("token");
 
     if (savedToken) {
 
       setToken(savedToken);
 
-      loadData();
+      try {
+
+        const res = await api.get("/users/me/");
+
+        setCurrentUser(res.data);
+
+        await loadData();
+
+      } catch (error) {
+
+        console.error("Token invalide");
+
+        localStorage.removeItem("token");
+        setToken(null);
+      }
 
     }
 
     setLoading(false);
 
-  }, []);
+  };
 
+  initAuth();
+
+}, []);
   const value = {
 
     currentUser,
